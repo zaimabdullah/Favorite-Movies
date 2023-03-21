@@ -11,8 +11,13 @@ const userInputs = addMovieModal.querySelectorAll('input');
 // const userInputs = addMovieModal.getElementsByTagName('input');
 const entryTextSection = document.getElementById('entry-text');
 const listRoot = document.getElementById('movie-list');
+const deleteMovieModal = document.getElementById('delete-modal');
 
 const movies = [];
+
+const toggleBackdrop = () => {
+  backdrop.classList.toggle('visible');
+};
 
 const updateUI = () => {
   if (movies.length === 0) {
@@ -22,7 +27,12 @@ const updateUI = () => {
   }
 };
 
-const deleteMovie = movieId => {
+const closeMovieDeletionModal = () => {
+  toggleBackdrop();
+  deleteMovieModal.classList.remove('visible');
+};
+
+const deleteMovieHandler = movieId => {
   let movieIndex = 0;
   for (const movie of movies) {
     if (movie.id === movieId) {
@@ -30,16 +40,31 @@ const deleteMovie = movieId => {
     }
     movieIndex++;
   }
-  movies.splice(movieIndex, 1); // remove the movie from array first
+  movies.splice(movieIndex, 1);
   listRoot.children[movieIndex].remove();
   // listRoot.removeChild(listRoot.children[movieIndex]);
+  closeMovieDeletionModal();
+  updateUI();
 };
 
-const deleteMovieHandler = movieId => {
-  const deleteMovieModal = document.getElementById('delete-modal');
+const startDeleteMovieHandler = movieId => {
   deleteMovieModal.classList.add('visible');
   toggleBackdrop();
-  deleteMovie(movieId);
+
+  const cancelDeletionButton = deleteMovieModal.querySelector('.btn--passive');
+  let confirmDeletionButton = deleteMovieModal.querySelector('.btn--danger');
+
+  confirmDeletionButton.replaceWith(confirmDeletionButton.cloneNode(true));
+
+  confirmDeletionButton = deleteMovieModal.querySelector('.btn--danger');
+
+  cancelDeletionButton.removeEventListener('click', closeMovieDeletionModal);
+
+  cancelDeletionButton.addEventListener('click', closeMovieDeletionModal);
+  confirmDeletionButton.addEventListener(
+    'click',
+    deleteMovieHandler.bind(null, movieId)
+  );
 };
 
 const renderNewMovieElement = (id, title, imageUrl, rating) => {
@@ -54,17 +79,20 @@ const renderNewMovieElement = (id, title, imageUrl, rating) => {
     <p>${rating}/5 stars</p>
   </div>
   `;
-  newMovieElement.addEventListener('click', deleteMovieHandler.bind(null, id));
+  newMovieElement.addEventListener(
+    'click',
+    startDeleteMovieHandler.bind(null, id)
+  );
   listRoot.append(newMovieElement);
 };
 
-const toggleBackdrop = () => {
-  backdrop.classList.toggle('visible');
+const closeMovieModal = () => {
+  addMovieModal.classList.remove('visible');
 };
 
-const toggleMovieModal = () => {
+const showMovieModal = () => {
   // function() {}
-  addMovieModal.classList.toggle('visible');
+  addMovieModal.classList.add('visible');
   toggleBackdrop();
 };
 
@@ -78,7 +106,8 @@ const clearMovieInput = () => {
 // add 'Handler' in func name if the func only get call in addEventListener
 // not in any other func
 const cancelAddMovieHandler = () => {
-  toggleMovieModal();
+  closeMovieModal();
+  toggleBackdrop();
   clearMovieInput();
 };
 
@@ -103,22 +132,30 @@ const addMovieHandler = () => {
     id: Math.random().toString(),
     title: titleValue,
     image: imageUrlValue,
-    rating: ratingValue
+    rating: ratingValue,
   };
 
   movies.push(newMovie);
   console.log(movies);
-  toggleMovieModal();
+  closeMovieModal();
+  toggleBackdrop();
   clearMovieInput();
-  renderNewMovieElement(newMovie.id ,newMovie.title, newMovie.image, newMovie.rating);
+  renderNewMovieElement(
+    newMovie.id,
+    newMovie.title,
+    newMovie.image,
+    newMovie.rating
+  );
   updateUI();
 };
 
 const backdropClickHandler = () => {
-  toggleMovieModal();
+  closeMovieModal();
+  closeMovieDeletionModal();
+  clearMovieInput();
 };
 
-startAddMovieButton.addEventListener('click', toggleMovieModal);
+startAddMovieButton.addEventListener('click', showMovieModal);
 backdrop.addEventListener('click', backdropClickHandler);
 cancelAddMovieButton.addEventListener('click', cancelAddMovieHandler);
 confirmAddMovieButton.addEventListener('click', addMovieHandler);
